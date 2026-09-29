@@ -3,8 +3,6 @@ import Header from './components/Header';
 import TabularView from './components/TabularView';
 import RelationalView from './components/RelationalView';
 import DocumentEngineView from './components/DocumentEngineView';
-import ValidationView from './components/ValidationView';
-import AiAssistantModal from './components/AiAssistantModal';
 import { api } from './api';
 import { CheckCircle, AlertCircle, Info } from 'lucide-react';
 
@@ -32,8 +30,6 @@ export default function App() {
 
   // Loaders & Modals
   const [isGenerating, setIsGenerating] = useState(false);
-  const [isAiLoading, setIsAiLoading] = useState(false);
-  const [isAiModalOpen, setIsAiModalOpen] = useState(false);
   const [toasts, setToasts] = useState([]);
   const sessionRequestRef = useRef(null);
   const userStartedFlowRef = useRef(false);
@@ -313,41 +309,6 @@ export default function App() {
     }
   };
 
-  // AI Edge Cases Fetcher
-  const handleApplyEdgeCases = async (fields, provider) => {
-    try {
-      setIsAiLoading(true);
-      const res = await api.aiSuggestEdgeCases(fields, sessionId, provider);
-      setActiveEdgeCases(res.edge_cases || []);
-      addToast(`Generated ${res.edge_cases?.length || 0} adversarial edge-cases.`, 'success');
-      return res.edge_cases;
-    } catch (err) {
-      console.error(err);
-      addToast(`AI Edge cases failed: ${err.message}`, 'error');
-      return [];
-    } finally {
-      setIsAiLoading(false);
-    }
-  };
-
-  // AI Schema Infer
-  const handleInferSchema = async (sampleText, provider) => {
-    try {
-      setIsAiLoading(true);
-      const res = await api.aiInferSchema([{ sample: sampleText }], provider);
-      if (res.schema) {
-        setSchema(res.schema);
-        setCurrentPreset('custom');
-        addToast('AI inferred schema synthesized!', 'success');
-      }
-    } catch (err) {
-      console.error(err);
-      addToast(`AI Schema inference failed: ${err.message}`, 'error');
-    } finally {
-      setIsAiLoading(false);
-    }
-  };
-
   return (
     <div className="app-container">
       {/* Global Header */}
@@ -357,7 +318,6 @@ export default function App() {
         sessionId={sessionId}
         onLoadPreset={handleLoadPreset}
         currentPreset={currentPreset}
-        onOpenAiModal={() => setIsAiModalOpen(true)}
         onRunDemo={handleRunDemo}
         onExport={handleExport}
         isGenerating={isGenerating}
@@ -407,33 +367,26 @@ export default function App() {
             onGenerateDocPreview={handleGenerateDocPreview}
             onDownloadBulkDocs={handleDownloadBulkDocs}
             onNlDocParse={async (query) => {
-              const res = await api.aiParseDocQuery(query);
-              return res.config;
+              try {
+                const res = await api.aiParseDocQuery(query);
+                if (!res.config || Object.keys(res.config).length === 0) {
+                  addToast('AI could not find document settings in that prompt.', 'error');
+                  return null;
+                }
+                addToast('AI settings applied to the document form.', 'success');
+                return res.config;
+              } catch (err) {
+                console.error(err);
+                addToast(`Apply AI failed: ${err.message}`, 'error');
+                return null;
+              }
             }}
             docPreviewData={docPreviewData}
             isGeneratingDoc={isGeneratingDoc}
           />
         )}
 
-        {activeTab === 'validation' && (
-          <ValidationView 
-            validation={validation}
-            generatedData={generatedData}
-            onExport={handleExport}
-            sessionId={sessionId}
-          />
-        )}
       </main>
-
-      {/* AI Assistant Modal */}
-      <AiAssistantModal 
-        isOpen={isAiModalOpen}
-        onClose={() => setIsAiModalOpen(false)}
-        schema={schema}
-        onApplyEdgeCases={handleApplyEdgeCases}
-        onInferSchema={handleInferSchema}
-        isAiLoading={isAiLoading}
-      />
 
       {/* Toast Notification Stack */}
       <div className="toast-container">

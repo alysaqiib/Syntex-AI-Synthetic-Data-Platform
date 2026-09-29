@@ -3,9 +3,6 @@ import {
   Database, 
   Share2, 
   FileText, 
-  ShieldCheck, 
-  Sparkles, 
-  Download, 
   RefreshCw,
   Sliders,
   Layers
@@ -17,7 +14,6 @@ export default function Header({
   sessionId, 
   onLoadPreset, 
   currentPreset,
-  onOpenAiModal,
   onRunDemo,
   onExport,
   isGenerating,
@@ -70,13 +66,6 @@ export default function Header({
           <span>Document Engine</span>
         </button>
 
-        <button 
-          className={`nav-tab-btn ${activeTab === 'validation' ? 'active' : ''}`}
-          onClick={() => setActiveTab('validation')}
-        >
-          <ShieldCheck size={16} />
-          <span>TSTR & Privacy</span>
-        </button>
       </nav>
 
       {/* Actions & Session */}
@@ -119,16 +108,6 @@ export default function Header({
             style={{ width: '48px', background: 'transparent', border: 'none', color: '#a5b4fc', fontSize: '0.8rem', fontFamily: 'var(--font-mono)' }}
           />
         </div>
-
-        {/* AI Assistant Button */}
-        <button 
-          className="btn btn-outline btn-sm" 
-          onClick={onOpenAiModal}
-          title="AI Edge-Cases & Schema Inferencing"
-        >
-          <Sparkles size={14} color="#818cf8" />
-          <span>AI Assist</span>
-        </button>
 
         <button
           className="btn btn-emerald btn-sm"
